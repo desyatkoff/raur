@@ -85,9 +85,9 @@ fn main() {
             update_package(package);
         }
         Commands::Remove { package } => {
-            // TODO: Make it actually remove package
-
             println!("Removing {package}...");
+
+            remove_package(package);
         }
     };
 }
@@ -214,5 +214,22 @@ fn update_package(pkg: &str) {
         install_package(pkg);
     } else {
         println!("`{}` is already up to date!", pkg);
+    }
+}
+
+fn remove_package(pkg: &str) {
+    let status = Command::new("sudo")
+        .arg("pacman")
+        .args(&[
+            "-Rns",
+            pkg
+        ])
+        .status()
+        .expect("Failed to run `pacman`");
+
+    if status.success() {
+        println!("Package `{}` removed successfully!", pkg);
+    } else {
+        eprintln!("Failed to remove package `{}`", pkg);
     }
 }
