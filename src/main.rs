@@ -124,7 +124,8 @@ fn install_package(pkg: &str) {
 
     makepkg.args([
         "-si",
-        "--noconfirm"
+        "--noconfirm",
+        "--skippgpcheck"
     ]);
     makepkg.current_dir(&repo_path);
 
