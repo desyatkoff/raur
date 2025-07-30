@@ -12,7 +12,7 @@ use tempfile::tempdir;
 #[derive(Parser)]
 #[command(name = "raur")]
 #[command(version = "0.1.0")]
-#[command(about = "Rusty - AUR helper", long_about = "RAUR is an Arch User Repository helper for managing AUR packages with ease")]
+#[command(about = "RAUR - Rusty AUR helper", long_about = "RAUR is an Arch User Repository helper for managing AUR packages with ease")]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
