@@ -12,6 +12,8 @@ use tempfile::tempdir;
 #[command(version = "0.1.0")]
 #[command(about = "RAUR - Rusty AUR helper", long_about = "RAUR is an Arch User Repository helper for managing AUR packages with ease")]
 struct Cli {
+    #[arg(long)]
+    skip_pgp_check: bool,
     #[command(subcommand)]
     command: Commands,
 }
@@ -75,12 +77,12 @@ fn main() {
         Commands::Install { package } => {
             println!("Installing {package}...");
 
-            install_package(package);
+            install_package(package, cli.skip_pgp_check);
         }
         Commands::Update { package } => {
             println!("Updating {package}...");
 
-            update_package(package);
+            update_package(package, cli.skip_pgp_check);
         }
         Commands::Remove { package } => {
             println!("Removing {package}...");
@@ -90,7 +92,7 @@ fn main() {
     };
 }
 
-fn install_package(pkg: &str) {
+fn install_package(pkg: &str, skip_pgp: bool) {
     println!("Checking AUR for `{}`...", pkg);
 
     let url = format!("https://aur.archlinux.org/rpc/?v=5&type=info&arg={}", pkg);
@@ -149,9 +151,13 @@ fn install_package(pkg: &str) {
 
     makepkg.args([
         "-si",
-        "--noconfirm",
-        "--skippgpcheck"
+        "--noconfirm"
     ]);
+
+    if skip_pgp {
+        makepkg.arg("--skippgpcheck");
+    }
+
     makepkg.current_dir(&repo_path);
 
     let output = makepkg
@@ -166,15 +172,15 @@ fn install_package(pkg: &str) {
         let stderr = String::from_utf8_lossy(&output.stderr);
 
         if stderr.contains("One or more PGP signatures could not be verified") {
-            eprintln!("PGP error! You might need to import the missing GPG key manually");
-            eprintln!("Try running: gpg --recv-keys <KEY>");
+            eprintln!("PGP error! You might need to import the missing GPG key manually or skip PGP check");
+            eprintln!("Try running:\n    A. `gpg --recv-keys <KEY>`\n    B. `raur install --skip-pgp-check`");
         }
 
         std::process::exit(1);
     }
 }
 
-fn update_package(pkg: &str) {
+fn update_package(pkg: &str, skip_pgp: bool) {
     println!("Checking installed version for `{}`...", pkg);
 
     let installed_version = get_installed_version(pkg);
@@ -209,7 +215,7 @@ fn update_package(pkg: &str) {
     if info.version != installed_version {
         println!("Update available! Updating `{}`...", pkg);
 
-        install_package(pkg);
+        install_package(pkg, skip_pgp);
     } else {
         println!("`{}` is already up to date!", pkg);
     }
