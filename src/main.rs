@@ -45,35 +45,62 @@ struct PackageInfo {
     description: Option<String>,
 }
 
+fn get_installed_version(pkg: &str) -> Option<String> {
+    let output = Command::new("pacman")
+        .args([
+            "-Q",
+            pkg
+        ])
+        .output()
+        .ok()?;
+
+    if !output.status.success() {
+        return None;
+    }
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let parts: Vec<&str> = stdout
+        .split_whitespace()
+        .collect();
+
+    if parts.len() >= 2 {
+        return Some(parts[1].to_string());
+    } else {
+        return None;
+    }
+}
+
 fn main() {
     let cli = Cli::parse();
 
     match &cli.command {
         Commands::Install { package } => {
+            println!("Installing {package}...");
+
             install_package(package);
         }
         Commands::Update { package } => {
-            // TODO: Make it actually update package
-
             println!("Updating {package}...");
+
+            update_package(package);
         }
         Commands::Remove { package } => {
             // TODO: Make it actually remove package
 
             println!("Removing {package}...");
         }
-    }
+    };
 }
 
 fn install_package(pkg: &str) {
     println!("Checking AUR for `{}`...", pkg);
 
     let url = format!("https://aur.archlinux.org/rpc/?v=5&type=info&arg={}", pkg);
-    let result = get(&url)
-        .expect("Failed to send request");
-    let aur: AurResponse = result
+    let response = get(&url)
+        .expect("Failed to query AUR");
+    let aur: AurResponse = response
         .json()
-        .expect("Failed to parse JSON");
+        .expect("Failed to parse AUR JSON");
 
     if aur.resultcount == 0 {
         eprintln!("Package `{}` not found in the AUR.", pkg);
@@ -141,10 +168,51 @@ fn install_package(pkg: &str) {
         let stderr = String::from_utf8_lossy(&output.stderr);
 
         if stderr.contains("One or more PGP signatures could not be verified") {
-            eprintln!("    PGP error! You might need to import the missing GPG key manually");
-            eprintln!("    Try running: gpg --recv-keys <KEY>");
+            eprintln!("PGP error! You might need to import the missing GPG key manually");
+            eprintln!("Try running: gpg --recv-keys <KEY>");
         }
 
         std::process::exit(1);
+    }
+}
+
+fn update_package(pkg: &str) {
+    println!("Checking installed version for `{}`...", pkg);
+
+    let installed_version = get_installed_version(pkg);
+
+    if installed_version.is_none() {
+        println!("`{}` is not installed. Use `raur install {}` instead", pkg, pkg);
+
+        return;
+    }
+
+    let installed_version = installed_version.unwrap();
+
+    println!("Installed version: {}", installed_version);
+
+    let url = format!("https://aur.archlinux.org/rpc/?v=5&type=info&arg={}", pkg);
+    let response = get(&url)
+        .expect("Failed to query AUR");
+    let aur: AurResponse = response
+        .json()
+        .expect("Failed to parse AUR JSON");
+
+    if aur.resultcount == 0 {
+        eprintln!("Package `{}` not found in AUR", pkg);
+
+        return;
+    }
+
+    let info = &aur.results[0];
+
+    println!("AUR version: {}", info.version);
+
+    if info.version != installed_version {
+        println!("Update available! Updating `{}`...", pkg);
+
+        install_package(pkg);
+    } else {
+        println!("`{}` is already up to date!", pkg);
     }
 }
