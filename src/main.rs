@@ -9,8 +9,8 @@ use tempfile::tempdir;
 
 #[derive(Parser)]
 #[command(name = "raur")]
-#[command(version = "0.1.0")]
-#[command(about = "RAUR - Rusty AUR helper", long_about = "RAUR is an Arch User Repository helper for managing AUR packages with ease")]
+#[command(version = "1.0.0")]
+#[command(about = "RAUR is an Arch User Repository helper for managing AUR packages with ease")]
 struct Cli {
     #[arg(long)]
     skip_pgp_check: bool,
