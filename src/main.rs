@@ -3,8 +3,6 @@ use clap::{
     Subcommand,
 };
 use std::process::Command;
-use std::fs;
-use std::path::PathBuf;
 use reqwest::blocking::get;
 use serde::Deserialize;
 use tempfile::tempdir;
