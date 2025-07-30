@@ -173,6 +173,33 @@ fn install_package(pkg: &str, skip_pgp: bool) {
 
         if stderr.contains("One or more PGP signatures could not be verified") {
             eprintln!("PGP error! You might need to import the missing GPG key manually or skip PGP check");
+
+            if let Some(line) = stderr.lines().find(|l| l.contains("key") && l.contains("unknown")) {
+                for word in line.split_whitespace() {
+                    if word.len() >= 16 && word.chars().all(|c| c.is_ascii_hexdigit()) {
+                        eprintln!(
+                            "Try running:\n    A. `gpg --recv-keys {}`\n    B. `raur install --skip-pgp-check`",
+                            word
+                        );
+
+                        return;
+                    }
+
+                    if word.len() >= 17 && word.ends_with(')') {
+                        let trimmed = word.trim_end_matches(')');
+
+                        if trimmed.chars().all(|c| c.is_ascii_hexdigit()) {
+                            eprintln!(
+                                "Try running:\n    A. `gpg --recv-keys {}`\n    B. `raur install --skip-pgp-check`",
+                                trimmed
+                            );
+
+                            return;
+                        }
+                    }
+                }
+            }
+
             eprintln!("Try running:\n    A. `gpg --recv-keys <KEY>`\n    B. `raur install --skip-pgp-check`");
         }
 
