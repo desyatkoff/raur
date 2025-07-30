@@ -21,6 +21,7 @@ RAUR is an Arch User Repository helper for managing AUR packages with ease
 5. [Installation](#installation)
 6. [Usage](#usage)
 7. [Feedback](#feedback)
+8. [License](#license)
 
 ## Features
 
@@ -93,3 +94,9 @@ RAUR is an Arch User Repository helper for managing AUR packages with ease
 ## Feedback  
 
 Found a bug? [Open an issue](https://github.com/desyatkoff/raur/issues/new)
+
+## License
+
+Copyright (C) Desyatkov Sergey
+
+RAUR is licensed under the GNU General Public License v3.0 or later. See the [LICENSE](LICENSE) file for more details
